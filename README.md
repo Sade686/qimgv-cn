@@ -1,4 +1,4 @@
-## :exclamation: Updates may be slow due to war in Ukraine :sunflower: :sunflower: :sunflower:
+## :exclamation:  :sunflower: :sunflower: :sunflower:
 
 qimgv | Current version: 1.0.2
 =====
