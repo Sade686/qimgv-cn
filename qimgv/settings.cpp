@@ -712,6 +712,30 @@ bool Settings::transparencyGrid() {
 void Settings::setTransparencyGrid(bool mode) {
     settings->settingsConf->setValue("drawTransparencyGrid", mode);
 }
+
+bool Settings::centerCrosshair() {
+    return settings->settingsConf->value("drawCenterCrosshair", true).toBool();
+}
+
+void Settings::setCenterCrosshair(bool mode) {
+    settings->settingsConf->setValue("drawCenterCrosshair", mode);
+}
+
+bool Settings::pixelInfo() {
+    return settings->settingsConf->value("showPixelInfo", true).toBool();
+}
+
+void Settings::setPixelInfo(bool mode) {
+    settings->settingsConf->setValue("showPixelInfo", mode);
+}
+
+bool Settings::grayscaleDisplay() {
+    return settings->settingsConf->value("grayscaleDisplay", false).toBool();
+}
+
+void Settings::setGrayscaleDisplay(bool mode) {
+    settings->settingsConf->setValue("grayscaleDisplay", mode);
+}
 //------------------------------------------------------------------------------
 bool Settings::enableSmoothScroll() {
     return settings->settingsConf->value("enableSmoothScroll", true).toBool();

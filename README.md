@@ -4,6 +4,16 @@ qimgv | Current version: 1.0.2
 =====
 Image viewer. Fast, easy to use. Optional video support.
 
+### Additional features in this fork
+
+This is a fork of [easymodo/qimgv](https://github.com/easymodo/qimgv) with three extra viewer features:
+
+- **Center crosshair** — green crosshair drawn over the image center, with a small cross in the middle. Scales/translates with the image. Toggle: `Alt+C`
+- **Pixel info** — live cursor position and pixel value shown in the window title, and in the top info bar when fullscreen. Multi-channel images show `RGB(A)` + hex; single-channel images show the raw gray value. Toggle: `Alt+P`
+- **Grayscale display** — non-destructive grayscale rendering of the current image. Toggle: `G` (also enables pixel info, so the gray value is visible)
+
+All three have settings entries (Image tab) and are persisted. Build requirements are unchanged from upstream.
+
 ## Screenshots
 
 Main window & panel        |  Folder view   |  Settings window  

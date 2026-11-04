@@ -104,6 +104,9 @@ signals:
     void renameFile();
     void contextMenu();
     void toggleTransparencyGrid();
+    void toggleCenterCrosshair();
+    void togglePixelInfo();
+    void toggleGrayscaleDisplay();
     void sortByName();
     void sortByTime();
     void sortBySize();

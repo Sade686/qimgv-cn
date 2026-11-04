@@ -185,6 +185,9 @@ void Core::initActions() {
     connect(actionManager, &ActionManager::renameFile, this, &Core::showRenameDialog);
     connect(actionManager, &ActionManager::contextMenu, mw, &MW::showContextMenu);
     connect(actionManager, &ActionManager::toggleTransparencyGrid, mw, &MW::toggleTransparencyGrid);
+    connect(actionManager, &ActionManager::toggleCenterCrosshair, mw, &MW::toggleCenterCrosshair);
+    connect(actionManager, &ActionManager::togglePixelInfo, mw, &MW::togglePixelInfo);
+    connect(actionManager, &ActionManager::toggleGrayscaleDisplay, mw, &MW::toggleGrayscaleDisplay);
     connect(actionManager, &ActionManager::sortByName, this, &Core::sortByName);
     connect(actionManager, &ActionManager::sortByTime, this, &Core::sortByTime);
     connect(actionManager, &ActionManager::sortBySize, this, &Core::sortBySize);

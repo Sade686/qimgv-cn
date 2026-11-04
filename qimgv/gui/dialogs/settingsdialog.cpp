@@ -178,6 +178,9 @@ void SettingsDialog::readSettings() {
     ui->panelFullscreenOnlyCheckBox->setChecked(settings->panelFullscreenOnly());
     ui->squareThumbnailsCheckBox->setChecked(settings->squareThumbnails());
     ui->transparencyGridCheckBox->setChecked(settings->transparencyGrid());
+    ui->centerCrosshairCheckBox->setChecked(settings->centerCrosshair());
+    ui->pixelInfoCheckBox->setChecked(settings->pixelInfo());
+    ui->grayscaleDisplayCheckBox->setChecked(settings->grayscaleDisplay());
     ui->enableSmoothScrollCheckBox->setChecked(settings->enableSmoothScroll());
     ui->usePreloaderCheckBox->setChecked(settings->usePreloader());
     ui->useThumbnailCacheCheckBox->setChecked(settings->useThumbnailCache());
@@ -325,6 +328,9 @@ void SettingsDialog::saveSettings() {
     settings->setPanelFullscreenOnly(ui->panelFullscreenOnlyCheckBox->isChecked());
     settings->setSquareThumbnails(ui->squareThumbnailsCheckBox->isChecked());
     settings->setTransparencyGrid(ui->transparencyGridCheckBox->isChecked());
+    settings->setCenterCrosshair(ui->centerCrosshairCheckBox->isChecked());
+    settings->setPixelInfo(ui->pixelInfoCheckBox->isChecked());
+    settings->setGrayscaleDisplay(ui->grayscaleDisplayCheckBox->isChecked());
     settings->setShowHiddenFiles(ui->showHiddenFilesCheckBox->isChecked());
     settings->setEnableSmoothScroll(ui->enableSmoothScrollCheckBox->isChecked());
     settings->setUsePreloader(ui->usePreloaderCheckBox->isChecked());

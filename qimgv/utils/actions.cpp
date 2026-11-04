@@ -91,5 +91,8 @@ void Actions::init() {
     mActions.insert("print", QVersionNumber(1,0,0));
     mActions.insert("toggleFullscreenInfoBar", QVersionNumber(1,0,0));
     mActions.insert("pasteFile", QVersionNumber(1,0,3));
+    mActions.insert("toggleCenterCrosshair", QVersionNumber(1,0,3));
+    mActions.insert("togglePixelInfo", QVersionNumber(1,0,3));
+    mActions.insert("toggleGrayscaleDisplay", QVersionNumber(1,0,3));
 }
 

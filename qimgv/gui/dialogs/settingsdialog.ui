@@ -2149,6 +2149,27 @@
                    </widget>
                   </item>
                   <item>
+                   <widget class="QCheckBox" name="centerCrosshairCheckBox">
+                    <property name="text">
+                     <string>Draw crosshair at image center</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="pixelInfoCheckBox">
+                    <property name="text">
+                     <string>Show pixel position and color under cursor</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="grayscaleDisplayCheckBox">
+                    <property name="text">
+                     <string>Display images in grayscale</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
                    <widget class="QWidget" name="widget_21" native="true">
                     <property name="accessibleName">
                      <string notr="true">SLine</string>

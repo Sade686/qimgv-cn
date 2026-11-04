@@ -1,5 +1,7 @@
 #include "imageviewerv2.h"
 
+#include <QtMath>
+
 ImageViewerV2::ImageViewerV2(QWidget *parent) : QGraphicsView(parent),
     pixmap(nullptr),
     pixmapScaled(nullptr),
@@ -15,6 +17,10 @@ ImageViewerV2::ImageViewerV2(QWidget *parent) : QGraphicsView(parent),
     scrollBarWorkaround(true),
     useFixedZoomLevels(false),
     trackpadDetection(true),
+    centerCrosshair(true),
+    pixelInfo(true),
+    grayscaleDisplay(false),
+    pixelCacheDirty(true),
     mouseInteraction(MouseInteractionState::MOUSE_NONE),
     minScale(0.01f),
     maxScale(500.0f),
@@ -131,6 +137,17 @@ void ImageViewerV2::onDPRChanged() {
 
 void ImageViewerV2::readSettings() {
     transparencyGrid = settings->transparencyGrid();
+    centerCrosshair = settings->centerCrosshair();
+    pixelInfo = settings->pixelInfo();
+    grayscaleDisplay = settings->grayscaleDisplay();
+    if(!pixelInfo)
+        hidePixelInfo();
+    if(isDisplaying())
+        pixelCacheDirty = true;
+    if(grayscaleDisplay && pixmap && pixmapItem.isVisible()) {
+        // reapply to the image that was loaded before this setting was read
+        pixmapItem.setPixmap(applyGrayscale(*pixmap));
+    }
     smoothAnimatedImages = settings->smoothAnimatedImages();
     smoothUpscaling = settings->smoothUpscaling();
     expandImage = settings->expandImage();
@@ -277,9 +294,10 @@ bool ImageViewerV2::showAnimationFrame(int frame) {
 void ImageViewerV2::updatePixmap(std::unique_ptr<QPixmap> newPixmap) {
     pixmap = std::move(newPixmap);
     pixmap->setDevicePixelRatio(dpr);
-    pixmapItem.setPixmap(*pixmap);
+    pixmapItem.setPixmap(grayscaleDisplay ? applyGrayscale(*pixmap) : *pixmap);
     pixmapItem.show();
     pixmapItem.update();
+    pixelCacheDirty = true;
 }
 
 void ImageViewerV2::showAnimation(std::shared_ptr<QMovie> _movie) {
@@ -318,12 +336,13 @@ void ImageViewerV2::showImage(std::unique_ptr<QPixmap> _pixmap) {
         pixmapItemScaled.hide();
         pixmap = std::move(_pixmap);
         pixmap->setDevicePixelRatio(dpr);
-        pixmapItem.setPixmap(*pixmap);
+        pixmapItem.setPixmap(grayscaleDisplay ? applyGrayscale(*pixmap) : *pixmap);
         Qt::TransformationMode mode = Qt::SmoothTransformation;
         if(mScalingFilter == QI_FILTER_NEAREST)
             mode = Qt::FastTransformation;
         pixmapItem.setTransformationMode(mode);
         pixmapItem.show();
+        pixelCacheDirty = true;
         updateMinScale();
 
         if(!keepFitMode || imageFitMode == FIT_FREE)
@@ -351,6 +370,9 @@ void ImageViewerV2::reset() {
     pixmapItem.setScale(1.0f);
     pixmapItem.setOffset(10000,10000);
     pixmap.reset();
+    pixelCache = QImage();
+    pixelCacheDirty = true;
+    hidePixelInfo();
     stopAnimation();
     movie = nullptr;
     centerOn(10000,10000);
@@ -368,7 +390,12 @@ void ImageViewerV2::setScaledPixmap(std::unique_ptr<QPixmap> newFrame) {
         return;
     pixmapScaled = std::move(newFrame);
     pixmapScaled->setDevicePixelRatio(dpr);
-    pixmapItemScaled.setPixmap(*pixmapScaled);
+    if(grayscaleDisplay) {
+        QPixmap scaled = applyGrayscale(*pixmapScaled);
+        pixmapItemScaled.setPixmap(scaled);
+    } else {
+        pixmapItemScaled.setPixmap(*pixmapScaled);
+    }
     pixmapItem.hide();
     pixmapItemScaled.show();
 }
@@ -525,6 +552,7 @@ void ImageViewerV2::mousePressEvent(QMouseEvent *event) {
 
 void ImageViewerV2::mouseMoveEvent(QMouseEvent *event) {
     QWidget::mouseMoveEvent(event);
+    updatePixelInfo(event->pos());
     if(!pixmap || mouseInteraction == MouseInteractionState::MOUSE_DRAG || mouseInteraction == MouseInteractionState::MOUSE_WHEEL_ZOOM)
         return;
 
@@ -704,6 +732,42 @@ void ImageViewerV2::drawBackground(QPainter *painter, const QRectF &rect) {
     if(!isDisplaying() || !transparencyGrid || !pixmap->hasAlphaChannel())
         return;
     painter->drawTiledPixmap(pixmapItem.sceneBoundingRect(), *checkboard);
+}
+
+// center crosshair, drawn on top of the image item
+void ImageViewerV2::drawForeground(QPainter *painter, const QRectF &rect) {
+    QGraphicsView::drawForeground(painter, rect);
+    if(!centerCrosshair || !isDisplaying())
+        return;
+    QRectF imgRect = pixmapItem.sceneBoundingRect();
+    // skip drawing when the image is outside the visible viewport area
+    if(!mapFromScene(imgRect).boundingRect().intersects(viewport()->rect()))
+        return;
+    const qreal GAP = 16.0;   // empty space around the center
+    const qreal CROSS = 8.0;  // half-length of the small center cross
+    QPointF c = imgRect.center();
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing, false);
+    // two passes: dark outline + green core, so it stays visible on both dark and bright images
+    for(int pass = 0; pass < 2; pass++) {
+        painter->setPen(pass == 0 ? QPen(QColor(0, 0, 0, 150), 3)
+                                  : QPen(QColor(0, 255, 0, 230), 1));
+        // horizontal line, gap in the middle
+        painter->drawLine(QPointF(imgRect.left(), c.y()), QPointF(c.x() - GAP, c.y()));
+        painter->drawLine(QPointF(c.x() + GAP, c.y()), QPointF(imgRect.right() + 1, c.y()));
+        // vertical line, gap in the middle
+        painter->drawLine(QPointF(c.x(), imgRect.top()), QPointF(c.x(), c.y() - GAP));
+        painter->drawLine(QPointF(c.x(), c.y() + GAP), QPointF(c.x(), imgRect.bottom() + 1));
+        // small cross at the center
+        painter->drawLine(QPointF(c.x() - CROSS, c.y()), QPointF(c.x() + CROSS, c.y()));
+        painter->drawLine(QPointF(c.x(), c.y() - CROSS), QPointF(c.x(), c.y() + CROSS));
+    }
+    painter->restore();
+}
+
+void ImageViewerV2::leaveEvent(QEvent *event) {
+    hidePixelInfo();
+    QGraphicsView::leaveEvent(event);
 }
 
 // simple pan behavior (cursor stops at the screen edges)
@@ -1305,4 +1369,135 @@ QSize ImageViewerV2::sourceSize() const {
     if(!pixmap)
         return QSize(0,0);
     return pixmap->size();
+}
+
+// temporary overrides till application restart (same as toggleTransparencyGrid)
+void ImageViewerV2::toggleCenterCrosshair() {
+    centerCrosshair = !centerCrosshair;
+    scene->update();
+}
+
+void ImageViewerV2::togglePixelInfo() {
+    pixelInfo = !pixelInfo;
+    if(!pixelInfo)
+        hidePixelInfo();
+    // mouse tracking is already enabled while the view is visible,
+    // values will be updated on the next mouseMoveEvent
+}
+
+// single hotkey: toggles grayscale display and pixel info together
+void ImageViewerV2::toggleGrayscaleDisplay() {
+    grayscaleDisplay = !grayscaleDisplay;
+    pixelInfo = grayscaleDisplay;
+    if(!isDisplaying())
+        return;
+    if(pixmapItem.isVisible())
+        pixmapItem.setPixmap(grayscaleDisplay ? applyGrayscale(*pixmap) : *pixmap);
+    if(pixmapScaled && pixmapItemScaled.isVisible())
+        pixmapItemScaled.setPixmap(grayscaleDisplay ? applyGrayscale(*pixmapScaled) : *pixmapScaled);
+    if(!pixelInfo)
+        hidePixelInfo();
+    pixelCacheDirty = true;
+    scene->update();
+}
+
+bool ImageViewerV2::centerCrosshairEnabled() {
+    return centerCrosshair;
+}
+
+bool ImageViewerV2::pixelInfoEnabled() {
+    return pixelInfo;
+}
+
+bool ImageViewerV2::grayscaleDisplayEnabled() {
+    return grayscaleDisplay;
+}
+
+// converts a pixmap to 8-bit grayscale, preserving its devicePixelRatio
+QPixmap ImageViewerV2::applyGrayscale(const QPixmap &pm) {
+    QImage img = pm.toImage();
+    QImage gray = img.convertToFormat(QImage::Format_Grayscale8);
+    gray.setDevicePixelRatio(img.devicePixelRatio());
+    return QPixmap::fromImage(gray);
+}
+
+// builds a QImage copy of the current image for pixel value lookup.
+// grayscale display mode is applied here, so the reported values always
+// match what is actually on screen (single-channel -> gray value)
+void ImageViewerV2::rebuildPixelCache() {
+    if(!pixmap) {
+        pixelCache = QImage();
+        pixelCacheDirty = true;
+        return;
+    }
+    QImage img = pixmap->toImage();
+    if(grayscaleDisplay && img.format() != QImage::Format_Grayscale8)
+        img = img.convertToFormat(QImage::Format_Grayscale8);
+    pixelCache = img;
+    pixelCacheDirty = false;
+}
+
+void ImageViewerV2::updatePixelInfo(const QPoint &viewPos) {
+    if(!pixelInfo)
+        return;
+    if(!isDisplaying() || !pixmap) {
+        hidePixelInfo();
+        return;
+    }
+    if(pixelCacheDirty)
+        rebuildPixelCache();
+    if(pixelCache.isNull()) {
+        hidePixelInfo();
+        return;
+    }
+    // map view pos -> scene pos -> item pos, then subtract the item offset
+    // (qimgv keeps pixmapItem parked at scene (10000,10000) and displays it
+    //  by moving its offset, so item coords alone are NOT pixel coords)
+    QPointF itemPos = pixmapItem.mapFromScene(mapToScene(viewPos)) - pixmapItem.offset();
+    int srcX = qFloor(itemPos.x());
+    int srcY = qFloor(itemPos.y());
+    // the cache may carry a devicePixelRatio; scale indices accordingly
+    qreal cacheScale = (qreal)pixelCache.width() / (qreal)pixmap->width();
+    int cx = qFloor(itemPos.x() * cacheScale);
+    int cy = qFloor(itemPos.y() * cacheScale);
+    if(cx < 0 || cy < 0 || cx >= pixelCache.width() || cy >= pixelCache.height()) {
+        hidePixelInfo();
+        return;
+    }
+    QString text = QString("X: %1  Y: %2").arg(srcX).arg(srcY);
+    QImage::Format fmt = pixelCache.format();
+    if(fmt == QImage::Format_Grayscale8 || fmt == QImage::Format_Alpha8) {
+        // single-channel 8-bit: raw gray value
+        int v = pixelCache.constBits()[cy * pixelCache.bytesPerLine() + cx];
+        text += QString("  Gray: %1").arg(v);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+    } else if(fmt == QImage::Format_Grayscale16) {
+        // single-channel 16-bit
+        const ushort *line = reinterpret_cast<const ushort*>(pixelCache.constScanLine(cy));
+        text += QString("  Gray: %1").arg(line[cx]);
+#endif
+    } else {
+        // multi-channel: RGB(A)
+        QRgb c = pixelCache.pixel(cx, cy);
+        text += QString("  RGB: %1, %2, %3")
+                    .arg(qRed(c)).arg(qGreen(c)).arg(qBlue(c));
+        if(pixelCache.hasAlphaChannel())
+            text += QString("  A: %1").arg(qAlpha(c));
+        text += QString("  #%1%2%3")
+                    .arg(qRed(c),   2, 16, QChar('0'))
+                    .arg(qGreen(c), 2, 16, QChar('0'))
+                    .arg(qBlue(c),  2, 16, QChar('0'));
+    }
+    // only update the title when the content actually changes
+    if(text == lastPixelInfoText)
+        return;
+    lastPixelInfoText = text;
+    emit pixelInfoTextChanged(text);
+}
+
+void ImageViewerV2::hidePixelInfo() {
+    if(!lastPixelInfoText.isEmpty()) {
+        lastPixelInfoText.clear();
+        emit pixelInfoTextChanged(QString());
+    }
 }

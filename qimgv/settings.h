@@ -137,6 +137,12 @@ public:
     void setSquareThumbnails(bool mode);
     bool transparencyGrid();
     void setTransparencyGrid(bool mode);
+    bool centerCrosshair();
+    void setCenterCrosshair(bool mode);
+    bool pixelInfo();
+    void setPixelInfo(bool mode);
+    bool grayscaleDisplay();
+    void setGrayscaleDisplay(bool mode);
     bool enableSmoothScroll();
     void setEnableSmoothScroll(bool mode);
     bool useThumbnailCache();

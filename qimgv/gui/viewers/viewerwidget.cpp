@@ -35,7 +35,11 @@ ViewerWidget::ViewerWidget(QWidget *parent)
     connect(imageViewer.get(), &ImageViewerV2::scalingRequested, this, &ViewerWidget::scalingRequested);
     connect(imageViewer.get(), &ImageViewerV2::scaleChanged, this, &ViewerWidget::onScaleChanged);
     connect(imageViewer.get(), &ImageViewerV2::playbackFinished, this, &ViewerWidget::onAnimationPlaybackFinished);
+    connect(imageViewer.get(), &ImageViewerV2::pixelInfoTextChanged, this, &ViewerWidget::pixelInfoTextChanged);
     connect(this, &ViewerWidget::toggleTransparencyGrid, imageViewer.get(), &ImageViewerV2::toggleTransparencyGrid);
+    connect(this, &ViewerWidget::toggleCenterCrosshair,  imageViewer.get(), &ImageViewerV2::toggleCenterCrosshair);
+    connect(this, &ViewerWidget::togglePixelInfo,        imageViewer.get(), &ImageViewerV2::togglePixelInfo);
+    connect(this, &ViewerWidget::toggleGrayscaleDisplay, imageViewer.get(), &ImageViewerV2::toggleGrayscaleDisplay);
     connect(this, &ViewerWidget::setFilterNearest,       imageViewer.get(), &ImageViewerV2::setFilterNearest);
     connect(this, &ViewerWidget::setFilterBilinear,      imageViewer.get(), &ImageViewerV2::setFilterBilinear);
     connect(this, &ViewerWidget::setScalingFilter,       imageViewer.get(), &ImageViewerV2::setScalingFilter);

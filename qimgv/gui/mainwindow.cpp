@@ -98,6 +98,10 @@ void MW::setupUi() {
     connect(this, &MW::volumeUp,  viewerWidget.get(), &ViewerWidget::volumeUp);
     connect(this, &MW::volumeDown,  viewerWidget.get(), &ViewerWidget::volumeDown);
     connect(this, &MW::toggleTransparencyGrid, viewerWidget.get(), &ViewerWidget::toggleTransparencyGrid);
+    connect(this, &MW::toggleCenterCrosshair,  viewerWidget.get(), &ViewerWidget::toggleCenterCrosshair);
+    connect(this, &MW::togglePixelInfo,        viewerWidget.get(), &ViewerWidget::togglePixelInfo);
+    connect(this, &MW::toggleGrayscaleDisplay, viewerWidget.get(), &ViewerWidget::toggleGrayscaleDisplay);
+    connect(viewerWidget.get(), &ViewerWidget::pixelInfoTextChanged, this, &MW::setPixelInfoText);
     connect(this, &MW::setLoopPlayback,  viewerWidget.get(), &ViewerWidget::setLoopPlayback);
 }
 
@@ -812,11 +816,15 @@ void MW::onInfoUpdated() {
     QString windowTitle;
     if(centralWidget->currentViewMode() == MODE_FOLDERVIEW) {
         windowTitle = tr("Folder view");
-        infoBarFullscreen->setInfo("", tr("No file opened."), "");
+        fsBarPos = "";
+        fsBarName = tr("No file opened.");
+        fsBarInfo = "";
         infoBarWindowed->setInfo("", tr("No file opened."), "");
     } else if(info.fileName.isEmpty()) {
         windowTitle = qApp->applicationName();
-        infoBarFullscreen->setInfo("", tr("No file opened."), "");
+        fsBarPos = "";
+        fsBarName = tr("No file opened.");
+        fsBarInfo = "";
         infoBarWindowed->setInfo("", tr("No file opened."), "");
     } else {
         windowTitle = info.fileName;
@@ -844,10 +852,40 @@ void MW::onInfoUpdated() {
         if(info.edited)
             windowTitle.prepend("* ");
 
-        infoBarFullscreen->setInfo(posString, info.fileName + (info.edited ? "  *" : ""), resString + "  " + sizeString);
+        fsBarPos = posString;
+        fsBarName = info.fileName + (info.edited ? "  *" : "");
+        fsBarInfo = resString + "  " + sizeString;
         infoBarWindowed->setInfo(posString, info.fileName + (info.edited ? "  *" : ""), resString + "  " + sizeString + " " + states);
     }
-    setWindowTitle(windowTitle);
+    windowTitleBase = windowTitle;
+    applyWindowTitle();
+    applyInfoBarFullscreen();
+}
+
+// appends the pixel info text to the fullscreen info bar
+// (in fullscreen the window title is not visible, so this is where it goes)
+void MW::applyInfoBarFullscreen() {
+    QString infoStr = fsBarInfo;
+    if(!pixelInfoText.isEmpty()) {
+        if(!infoStr.isEmpty())
+            infoStr += "   |   ";
+        infoStr += pixelInfoText;
+    }
+    infoBarFullscreen->setInfo(fsBarPos, fsBarName, infoStr);
+}
+
+// appends the pixel info text (from ImageViewerV2) to the base window title
+void MW::applyWindowTitle() {
+    setWindowTitle(pixelInfoText.isEmpty() ? windowTitleBase
+                                           : windowTitleBase + "  |  " + pixelInfoText);
+}
+
+void MW::setPixelInfoText(const QString &text) {
+    if(pixelInfoText == text)
+        return;
+    pixelInfoText = text;
+    applyWindowTitle();
+    applyInfoBarFullscreen();
 }
 
 // TODO!!! buffer this in mw

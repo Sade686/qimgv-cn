@@ -112,6 +112,12 @@ private:
 
     PanelPosition panelPosition;
     CurrentInfo info;
+
+    // pixel info under the cursor, appended to the window title / fullscreen info bar
+    QString windowTitleBase, pixelInfoText;
+    QString fsBarPos, fsBarName, fsBarInfo;
+    void applyWindowTitle();
+    void applyInfoBarFullscreen();
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     QDesktopWidget desktopWidget;
 #endif
@@ -194,12 +200,16 @@ signals:
     void volumeUp();
     void volumeDown();
     void toggleTransparencyGrid();
+    void toggleCenterCrosshair();
+    void togglePixelInfo();
+    void toggleGrayscaleDisplay();
     void droppedIn(const QMimeData*, QObject*);
     void draggedOut();
     void setLoopPlayback(bool);
     void playbackFinished();
 
 public slots:
+    void setPixelInfoText(const QString &text);
     void setupFullUi();
     void showDefault();
     void showCropPanel();

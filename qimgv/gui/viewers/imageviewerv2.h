@@ -11,6 +11,7 @@
 #include <QColor>
 #include <QTimer>
 #include <QDebug>
+#include <QImage>
 #include <memory>
 #include <cmath>
 #include "settings.h"
@@ -67,6 +68,8 @@ signals:
     void animationPaused(bool);
     void frameChanged(int);
     void durationChanged(int);
+    // pixel info under the cursor, shown in the window title (empty = hide)
+    void pixelInfoTextChanged(const QString &text);
 
 public slots:
     virtual void setFitMode(ImageFitMode mode);
@@ -105,6 +108,13 @@ public slots:
     void toggleLockView();
     bool lockViewEnabled();
 
+    void toggleCenterCrosshair();
+    void togglePixelInfo();
+    void toggleGrayscaleDisplay();
+    bool centerCrosshairEnabled();
+    bool pixelInfoEnabled();
+    bool grayscaleDisplayEnabled();
+
 protected:
     virtual void mousePressEvent(QMouseEvent *event);
     virtual void mouseMoveEvent(QMouseEvent* event);
@@ -112,7 +122,9 @@ protected:
     virtual void resizeEvent(QResizeEvent* event);
     void wheelEvent(QWheelEvent *event);
     void showEvent(QShowEvent *event);
+    void leaveEvent(QEvent *event);
     void drawBackground(QPainter *painter, const QRectF &rect);
+    void drawForeground(QPainter *painter, const QRectF &rect);
 
     bool eventFilter(QObject *o, QEvent *ev);
 protected slots:
@@ -139,6 +151,9 @@ private:
          smoothUpscaling,  forceFastScale, keepFitMode,
          loopPlayback,     mIsFullscreen,  scrollBarWorkaround,
          useFixedZoomLevels, trackpadDetection;
+    bool centerCrosshair;
+    bool pixelInfo;
+    bool grayscaleDisplay;
     QList<float> zoomLevels;
     MouseInteractionState mouseInteraction;
     const int SCROLL_UPDATE_RATE = 7;
@@ -169,6 +184,15 @@ private:
     ScalingFilter mScalingFilter;
 
     QPixmap *checkboard;
+
+    // pixel info shown in the window title (multi-channel: RGB(A), single-channel: gray value)
+    QImage pixelCache;
+    QString lastPixelInfoText;
+    bool pixelCacheDirty;
+    void rebuildPixelCache();
+    void updatePixelInfo(const QPoint &viewPos);
+    void hidePixelInfo();
+    QPixmap applyGrayscale(const QPixmap &pm);
 
     void zoomAnchored(float newScale);
     void fitNormal();

@@ -80,6 +80,10 @@ signals:
     void fitOriginal();
     void fitWindowStretch();
     void toggleTransparencyGrid();
+    void toggleCenterCrosshair();
+    void togglePixelInfo();
+    void toggleGrayscaleDisplay();
+    void pixelInfoTextChanged(const QString &text);
     void draggedOut();
     void setFilterNearest();
     void setFilterBilinear();
