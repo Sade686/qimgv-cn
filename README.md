@@ -4,15 +4,42 @@ qimgv | Current version: 1.0.3
 =====
 Image viewer. Fast, easy to use. Optional video support.
 
-### Additional features in this fork
+### 本分支新增功能 / New features in this fork
 
 This is a fork of [easymodo/qimgv](https://github.com/easymodo/qimgv) with three extra viewer features:
 
-- **Center crosshair** — green crosshair drawn over the image center, with a small cross in the middle. Scales/translates with the image. Toggle: `Alt+C`
-- **Pixel info** — live cursor position and pixel value shown in the window title, and in the top info bar when fullscreen. Multi-channel images show `RGB(A)` + hex; single-channel images show the raw gray value. Toggle: `Alt+P`
-- **Grayscale display** — non-destructive grayscale rendering of the current image. Toggle: `G` (also enables pixel info, so the gray value is visible)
+#### 1. 中心十字标 / Center Crosshair  — `Alt+C`
 
-All three have settings entries (Image tab) and are persisted. Build requirements are unchanged from upstream.
+- 在**图像中心**绘制绿色十字线，中间带一个**小十字**（非窗口中心，图像缩放/平移时始终跟随）
+- 带半透明黑色描边，亮图、暗图上都清晰可见
+- 可通过快捷键或设置界面开关，默认**开启**
+
+#### 2. 像素信息 / Pixel Info  — `Alt+P`
+
+- 实时显示光标处的**像素坐标和颜色值**
+- 窗口模式显示在**标题栏**，全屏模式显示在**顶部信息条**（文件名、尺寸、大小等原有信息保留）
+- 按图像通道数自动选择显示格式：
+
+| 图像类型 | 标题栏显示示例 |
+|---|---|
+| 多通道（RGB / RGBA） | `X: 100  Y: 50  RGB: 255, 128, 0  #ff8000` |
+| 单通道（Grayscale8 / Grayscale16 / Alpha8） | `X: 100  Y: 50  Gray: 137` |
+
+- 移出图像后自动消失，默认**开启**
+
+#### 3. 灰度显示 / Grayscale Display  — `G`
+
+- 将当前图像以灰度渲染显示，**非破坏性**——不修改原图，随时切换，旋转/裁剪后自动重新应用
+- 灰度模式下像素信息自动变为单值灰度显示（`Gray: N`），方便取值
+- 默认关闭
+
+#### 设置 / Settings
+
+三个功能均在 **设置 → 图像** 选项卡中有对应复选框，状态自动持久化（配置文件中为 `drawCenterCrosshair` / `showPixelInfo` / `grayscaleDisplay`）。快捷键可在设置中重新绑定。
+
+#### 构建 / Build
+
+构建要求与上游一致（Qt 5.12+，CMake）。MSVC 编译需额外加 `/utf-8` 选项（项目源码为 UTF-8 编码）。
 
 ## Screenshots
 
