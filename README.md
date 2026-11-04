@@ -1,6 +1,6 @@
 ## :exclamation:  :sunflower: :sunflower: :sunflower:
 
-qimgv | Current version: 1.0.2
+qimgv | Current version: 1.0.3
 =====
 Image viewer. Fast, easy to use. Optional video support.
 
