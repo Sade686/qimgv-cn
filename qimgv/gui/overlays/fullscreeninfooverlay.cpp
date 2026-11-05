@@ -22,5 +22,10 @@ void FullscreenInfoOverlay::setInfo(QString pos, QString fileName, QString info)
     ui->posLabel->setText(pos);
     ui->nameLabel->setText(fileName);
     ui->infoLabel->setText(info);
+    // the bar used to be capped at 600px which cut off long file names and the
+    // info text; let it grow with its contents, but never wider than the window
+    int containerWidth = containerSize().width();
+    if(containerWidth > 0)
+        setMaximumWidth(containerWidth);
     this->adjustSize();
 }

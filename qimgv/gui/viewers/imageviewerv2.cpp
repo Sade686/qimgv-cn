@@ -302,6 +302,9 @@ void ImageViewerV2::updatePixmap(std::unique_ptr<QPixmap> newPixmap) {
 
 void ImageViewerV2::showAnimation(std::shared_ptr<QMovie> _movie) {
     if(_movie && _movie->isValid()) {
+        // keep the visible area across image switches when a lock is active
+        bool hadImage = isDisplaying();
+        saveViewportPos();
         reset();
         movie = _movie;
         movie->jumpToFrame(0);
@@ -322,7 +325,9 @@ void ImageViewerV2::showAnimation(std::shared_ptr<QMovie> _movie) {
         } else {
             imageFitMode = FIT_FREE;
             fitFree(lockedScale);
-            if(mViewLock == LOCK_ALL)
+            // LOCK_ZOOM also restores the viewport position, so the pixel
+            // under the cursor does not jump when switching between images
+            if(hadImage || mViewLock == LOCK_ALL)
                 applySavedViewportPos();
         }
         startAnimation();
@@ -331,6 +336,10 @@ void ImageViewerV2::showAnimation(std::shared_ptr<QMovie> _movie) {
 
 // display & initialize
 void ImageViewerV2::showImage(std::unique_ptr<QPixmap> _pixmap) {
+    // with a view/zoom lock active, remember where we are looking right now,
+    // so the same image area stays under the cursor after the switch
+    bool hadImage = isDisplaying();
+    saveViewportPos();
     reset();
     if(_pixmap) {
         pixmapItemScaled.hide();
@@ -353,7 +362,9 @@ void ImageViewerV2::showImage(std::unique_ptr<QPixmap> _pixmap) {
         } else {
             imageFitMode = FIT_FREE;
             fitFree(lockedScale);
-            if(mViewLock == LOCK_ALL)
+            // LOCK_ZOOM also restores the viewport position, so the pixel
+            // under the cursor does not jump when switching between images
+            if(hadImage || mViewLock == LOCK_ALL)
                 applySavedViewportPos();
         }
         requestScaling();
@@ -1263,7 +1274,7 @@ bool ImageViewerV2::lockViewEnabled() {
 // savedViewportPos is [0...1][0...1]
 // values are where viewport center is on the image
 void ImageViewerV2::saveViewportPos() {
-    if(mViewLock != LOCK_ALL)
+    if(mViewLock == LOCK_NONE)
         return;
     QGraphicsPixmapItem *item = &pixmapItem;
     QPointF sceneCenter = mapToScene( viewport()->rect().center() ) + QPointF(1,1);

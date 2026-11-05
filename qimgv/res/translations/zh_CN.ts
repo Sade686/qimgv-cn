@@ -1936,6 +1936,21 @@ hr { height: 1px; border-width: 0; }
         <source>Navigate to mpv binary</source>
         <translation>定位mpv文件路径</translation>
     </message>
+    <message>
+        <location filename="../../gui/dialogs/settingsdialog.ui"/>
+        <source>Draw crosshair at image center</source>
+        <translation>在图像中心绘制十字标</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/settingsdialog.ui"/>
+        <source>Show pixel position and color under cursor</source>
+        <translation>显示光标处的像素坐标与颜色</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/settingsdialog.ui"/>
+        <source>Display images in grayscale</source>
+        <translation>以灰度方式显示图像</translation>
+    </message>
 </context>
 <context>
     <name>ShortcutCreatorDialog</name>
