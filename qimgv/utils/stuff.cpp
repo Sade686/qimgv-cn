@@ -1,4 +1,5 @@
 #include "stuff.h"
+#include <QDir>
 
 int clamp(int x, int lower, int upper) {
     return qMin(upper, qMax(x, lower));
@@ -30,5 +31,15 @@ QString fromStdString(StdString str) {
     return QString::fromStdWString(str);
 #else
     return QString::fromStdString(str);
+#endif
+}
+
+QString fromFsPath(const std::filesystem::path &path) {
+#ifdef _WIN32
+    // fs paths concatenate with '\' while the rest of the app uses '/'.
+    // normalize, otherwise indexOfFile() string comparisons fail.
+    return QDir::fromNativeSeparators(QString::fromStdWString(path.wstring()));
+#else
+    return QString::fromStdString(path.generic_string());
 #endif
 }
