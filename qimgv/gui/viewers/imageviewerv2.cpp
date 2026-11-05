@@ -26,7 +26,8 @@ ImageViewerV2::ImageViewerV2(QWidget *parent) : QGraphicsView(parent),
     maxScale(500.0f),
     fitWindowScale(0.125f),
     fitWindowStretchScale(0.125f),
-    mViewLock(LOCK_NONE),
+    mViewLock(LOCK_ZOOM),
+    lockedScaleValid(false),
     imageFitMode(FIT_WINDOW),
     mScalingFilter(QI_FILTER_BILINEAR),
     imageFitModeDefault(FIT_WINDOW),
@@ -320,15 +321,20 @@ void ImageViewerV2::showAnimation(std::shared_ptr<QMovie> _movie) {
         if(!keepFitMode || imageFitMode == FIT_FREE)
             imageFitMode = imageFitModeDefault;
 
-        if(mViewLock == LOCK_NONE) {
+        if(mViewLock == LOCK_NONE || !hadImage) {
             applyFitMode();
+            // zoom lock is enabled by default: adopt the scale of the first
+            // displayed image as the locked one
+            if(mViewLock != LOCK_NONE) {
+                lockedScale = pixmapItem.scale();
+                lockedScaleValid = true;
+            }
         } else {
             imageFitMode = FIT_FREE;
             fitFree(lockedScale);
             // LOCK_ZOOM also restores the viewport position, so the pixel
             // under the cursor does not jump when switching between images
-            if(hadImage || mViewLock == LOCK_ALL)
-                applySavedViewportPos();
+            applySavedViewportPos();
         }
         startAnimation();
     }
@@ -357,15 +363,20 @@ void ImageViewerV2::showImage(std::unique_ptr<QPixmap> _pixmap) {
         if(!keepFitMode || imageFitMode == FIT_FREE)
             imageFitMode = imageFitModeDefault;
 
-        if(mViewLock == LOCK_NONE) {
+        if(mViewLock == LOCK_NONE || !hadImage) {
             applyFitMode();
+            // zoom lock is enabled by default: adopt the scale of the first
+            // displayed image as the locked one
+            if(mViewLock != LOCK_NONE) {
+                lockedScale = pixmapItem.scale();
+                lockedScaleValid = true;
+            }
         } else {
             imageFitMode = FIT_FREE;
             fitFree(lockedScale);
             // LOCK_ZOOM also restores the viewport position, so the pixel
             // under the cursor does not jump when switching between images
-            if(hadImage || mViewLock == LOCK_ALL)
-                applySavedViewportPos();
+            applySavedViewportPos();
         }
         requestScaling();
         update();
@@ -857,7 +868,7 @@ void ImageViewerV2::updateMinScale() {
         else
             minScale = fitWindowScale;
     }
-    if(mViewLock != LOCK_NONE && lockedScale < minScale)
+    if(mViewLock != LOCK_NONE && lockedScaleValid && lockedScale < minScale)
         minScale = lockedScale;
 }
 
@@ -1251,6 +1262,7 @@ bool ImageViewerV2::lockZoomEnabled() {
 
 void ImageViewerV2::lockZoom() {
     lockedScale = pixmapItem.scale();
+    lockedScaleValid = true;
     imageFitMode = FIT_FREE;
     saveViewportPos();
 }
@@ -1274,7 +1286,7 @@ bool ImageViewerV2::lockViewEnabled() {
 // savedViewportPos is [0...1][0...1]
 // values are where viewport center is on the image
 void ImageViewerV2::saveViewportPos() {
-    if(mViewLock == LOCK_NONE)
+    if(mViewLock == LOCK_NONE || !pixmap || pixmapItem.pixmap().isNull())
         return;
     QGraphicsPixmapItem *item = &pixmapItem;
     QPointF sceneCenter = mapToScene( viewport()->rect().center() ) + QPointF(1,1);
@@ -1338,6 +1350,12 @@ void ImageViewerV2::doZoom(float newScale) {
 
     pixmapItem.setTransformationMode(selectTransformationMode());
     swapToOriginalPixmap();
+    // keep the locked scale in sync with what the user actually sees,
+    // so switching images keeps both the zoom level and the viewport
+    if(mViewLock != LOCK_NONE) {
+        lockedScale = newScale;
+        lockedScaleValid = true;
+    }
     emit scaleChanged(newScale);
 }
 

@@ -174,6 +174,8 @@ private:
     float minScale, maxScale, fitWindowScale, fitWindowStretchScale, expandLimit, lockedScale;
     QPointF savedViewportPos;
     ViewLockMode mViewLock;
+    // lockedScale only makes sense once the first image has been displayed
+    bool lockedScaleValid;
 
     QPair<QPointF, QPoint> zoomAnchor; // [pixmap coords, viewport coords]
 

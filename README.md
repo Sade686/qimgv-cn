@@ -33,6 +33,12 @@ This is a fork of [easymodo/qimgv](https://github.com/easymodo/qimgv) with three
 - 灰度模式下像素信息自动变为单值灰度显示（`Gray: N`），方便取值
 - 默认关闭
 
+#### 4. 缩放锁定 / Zoom Lock  — `F9`
+
+- **默认开启**：浏览图片时自动保持缩放级别和当前可视区域，切换图片后光标所指的像素不变（适合逐张对比同尺寸图片）
+- 在锁定状态下继续缩放/平移，切换图片时会保持**新的**缩放位置
+- `F9` 可随时开关，标题栏会显示 `[zoom lock]` 状态
+
 #### 设置 / Settings
 
 三个功能均在 **设置 → 图像** 选项卡中有对应复选框，状态自动持久化（配置文件中为 `drawCenterCrosshair` / `showPixelInfo` / `grayscaleDisplay`）。快捷键可在设置中重新绑定。
